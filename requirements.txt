@@ -1,0 +1,11 @@
+Flask
+mysql-connector-python
+python-dotenv
+Flask-Cors
+openai
+google-generativeai
+python-dotenv
+mysql-connector-python
+unidecode
+statistics
+Flask[async]

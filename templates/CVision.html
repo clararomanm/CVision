@@ -1,0 +1,1560 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CVision</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+        }
+        .sidebar {
+            background-color: #17B74D; /* Main brand color */
+        }
+        .sidebar-link {
+            transition: all 0.2s ease-in-out;
+        }
+        .sidebar-link:hover, .sidebar-link.active {
+            background-color: #374151;
+            color: #ffffff;
+        }
+        .main-content {
+            transition: margin-left 0.3s ease;
+        }
+        .card {
+            background-color: white;
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            transition: box-shadow 0.3s ease;
+        }
+        .card:hover {
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+        }
+        .modal-backdrop {
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+        .input-field {
+            width: 100%;
+            border-radius: 0.5rem;
+            border: 1px solid #d1d5db;
+            padding: 0.5rem 0.75rem;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .input-field:focus {
+            outline: none;
+            border-color: #17B74D;
+            box-shadow: 0 0 0 2px rgba(23, 183, 77, 0.3);
+        }
+        .input-field:read-only {
+            background-color: #f3f4f6;
+            cursor: default;
+        }
+        .section-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #1f2937;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid #17B74D;
+            margin-bottom: 1.5rem;
+        }
+        .dynamic-item {
+            position: relative;
+            border: 1px solid #e5e7eb;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            background-color: #f9fafb;
+        }
+        .delete-btn {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            color: #ef4444;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+        .delete-btn:hover {
+            color: #b91c1c;
+        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+        /* Custom slider styles */
+        input[type=range] {
+            -webkit-appearance: none;
+            width: 100%;
+            background: transparent;
+        }
+
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 16px;
+            width: 16px;
+            border-radius: 50%;
+            background: #17B74D;
+            cursor: pointer;
+            margin-top: -6px; 
+        }
+
+        input[type=range]::-moz-range-thumb {
+            height: 16px;
+            width: 16px;
+            border-radius: 50%;
+            background: #17B74D;
+            cursor: pointer;
+        }
+
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 4px;
+            cursor: pointer;
+            background: #d1d5db;
+            border-radius: 5px;
+        }
+        input[type=range]:focus::-webkit-slider-runnable-track {
+            background: #9ca3af;
+        }
+    </style>
+</head>
+<body class="flex h-screen overflow-hidden">
+
+    <aside class="sidebar w-64 text-gray-100 flex flex-col flex-shrink-0">
+        <div>
+            <div class="p-6">
+                <div class="bg-white rounded-xl p-2 flex justify-center items-center">
+                    <img src="https://i.imgur.com/K6hPDRM.png" alt="CVision Logo" class="max-w-full h-auto" referrerpolicy="no-referrer">
+                </div>
+            </div>
+            <nav class="mt-6">
+                <a href="#" id="nav-dashboard" class="sidebar-link active flex items-center py-3 px-6">
+                    <i data-lucide="layout-dashboard" class="mr-4"></i> Dashboard
+                </a>
+                <a href="#" id="nav-puestos" class="sidebar-link flex items-center py-3 px-6">
+                    <i data-lucide="clipboard-list" class="mr-4"></i> Gestionar Puestos
+                </a>
+                <a href="#" id="nav-vacantes" class="sidebar-link flex items-center py-3 px-6">
+                    <i data-lucide="folder-open" class="mr-4"></i> Centro de Vacantes
+                </a>
+            </nav>
+        </div>
+        <div class="p-6 mt-auto">
+            <button id="update-candidates-btn" class="w-full bg-white text-[#17B74D] font-bold py-3 px-4 rounded-lg hover:bg-gray-100 transition-colors">
+                Actualizar candidatos
+            </button>
+        </div>
+    </aside>
+
+    <main class="main-content flex-1 overflow-y-auto">
+        <div class="p-8">
+            <div id="dashboard-view">
+                <h2 class="text-3xl font-bold text-gray-800 mb-2">Bienvenido al Portal de RRHH</h2>
+                <p class="text-gray-600 mb-8">Gestiona tus puestos, vacantes y candidatos de forma eficiente.</p>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="card p-6 flex items-center">
+                        <div class="p-4 bg-green-100 rounded-full mr-4">
+                            <i data-lucide="clipboard-list" class="text-green-600"></i>
+                        </div>
+                        <div>
+                            <p class="text-gray-500 text-sm">Puestos Definidos</p>
+                            <p id="dashboard-puestos-count" class="text-2xl font-bold text-gray-800">0</p>
+                        </div>
+                    </div>
+                    <div class="card p-6 flex items-center">
+                        <div class="p-4 bg-green-100 rounded-full mr-4">
+                            <i data-lucide="folder-open" class="text-green-600"></i>
+                        </div>
+                        <div>
+                            <p class="text-gray-500 text-sm">Vacantes Abiertas</p>
+                            <p id="dashboard-vacantes-count" class="text-2xl font-bold text-gray-800">0</p>
+                        </div>
+                    </div>
+                    <div class="card p-6 flex items-center">
+                        <div class="p-4 bg-green-100 rounded-full mr-4">
+                            <i data-lucide="users" class="text-green-600"></i>
+                        </div>
+                        <div>
+                            <p class="text-gray-500 text-sm">Candidatos Totales</p>
+                            <p id="dashboard-candidatos-count" class="text-2xl font-bold text-gray-800">0</p>
+                        </div>
+                    </div>
+                </div>
+                 <div class="card mt-8 p-6">
+                    <h3 class="text-xl font-semibold text-gray-800 mb-4">Flujo de Trabajo</h3>
+                    <p class="text-gray-600">
+                        Esta aplicación facilita la gestión de candidatos siguiendo un flujo optimizado:
+                    </p>
+                    <ol class="list-decimal list-inside mt-4 space-y-2 text-gray-600">
+                        <li><b>Definir un Puesto:</b> Crea plantillas para los roles que buscas en la sección "Gestionar Puestos".</li>
+                        <li><b>Abrir una Vacante:</b> Usa una plantilla de puesto para abrir una nueva vacante en el "Centro de Vacantes".</li>
+                        <li><b>Visualizar Top Candidatos:</b> Al abrir una vacante, el sistema te mostrará automáticamente los candidatos más compatibles.</li>
+                        <li><b>Consultar Informes:</b> Accede a informes detallados generados por IA para cada candidato.</li>
+                    </ol>
+                    <p class="text-gray-600 mt-4 font-semibold">
+                        Pulsa el botón "Actualizar candidatos" en la barra lateral para actualizar la base de datos con los posibles nuevos candidatos disponibles.
+                    </p>
+                </div>
+            </div>
+            <div id="puestos-view" class="hidden">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-3xl font-bold text-gray-800">Gestionar Puestos Predefinidos</h2>
+                    <button id="crear-puesto-btn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg flex items-center">
+                        <i data-lucide="plus" class="mr-2 h-5 w-5"></i> Crear Nuevo Puesto
+                    </button>
+                </div>
+                <div id="puestos-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+            </div>
+            <div id="vacantes-view" class="hidden">
+                <h2 class="text-3xl font-bold text-gray-800 mb-6">Centro de Vacantes</h2>
+                <div id="vacantes-list" class="space-y-6"></div>
+            </div>
+            <div id="vacante-detail-view" class="hidden">
+                <button id="back-to-vacantes" class="mb-6 text-green-600 hover:text-green-800 font-semibold flex items-center">
+                    <i data-lucide="arrow-left" class="mr-2 h-5 w-5"></i> Volver a Vacantes
+                </button>
+                <h2 id="vacante-detail-title" class="text-3xl font-bold text-gray-800 mb-2"></h2>
+                <p class="text-gray-600 mb-8">Ranking de candidatos para esta vacante.</p>
+                
+                <!-- MODIFICACIÓN: Nueva sección para Candidatos Aptos -->
+                <div id="aptos-container-wrapper" class="hidden">
+                    <div class="card p-6 mb-6 bg-green-50 border-green-200 border">
+                        <h3 class="text-xl font-semibold text-green-800 mb-4 flex items-center">
+                            <i data-lucide="check-circle-2" class="mr-3 text-green-600"></i>
+                            Candidatos Aptos para Entrevista
+                        </h3>
+                        <div id="aptos-candidatos-list" class="space-y-4"></div>
+                    </div>
+                </div>
+
+                <!-- MODIFICACIÓN: Título cambiado y clase mb-8 eliminada -->
+                <div class="card p-6">
+                    <h3 class="text-xl font-semibold text-gray-800 mb-4">Ranking General</h3>
+                    <div id="top-candidatos-list" class="space-y-4"></div>
+                    <div id="show-more-container" class="mt-6 text-center"></div>
+                </div>
+            </div>
+
+            <div id="candidato-report-view" class="hidden">
+                <div class="flex justify-between items-center mb-6">
+                    <button id="back-to-vacante-detail" class="text-green-600 hover:text-green-800 font-semibold flex items-center">
+                        <i data-lucide="arrow-left" class="mr-2 h-5 w-5"></i> Volver al Ranking
+                    </button>
+                    <div class="flex items-center space-x-4">
+                        <button id="export-pdf-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg flex items-center">
+                            <i data-lucide="file-down" class="mr-2 h-5 w-5"></i> Exportar a PDF
+                        </button>
+                        <button id="save-candidato-report" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg flex items-center">
+                            <i data-lucide="save" class="mr-2 h-5 w-5"></i> Guardar Cambios
+                        </button>
+                    </div>
+                </div>
+
+                <div id="report-content" class="card p-8">
+                    <div class="mb-6 pb-4 border-b">
+                        <label for="report-apto" class="block text-sm font-medium text-gray-700 mb-1">¿Candidato apto para entrevista?</label>
+                        <select id="report-apto" class="input-field !w-auto cursor-pointer">
+                            <option value="no_definido" selected>-- Seleccionar --</option>
+                            <option value="0">No</option>
+                            <option value="1">Sí</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-8">
+                        <h3 class="section-title">Puntuación y Justificación</h3>
+                        <div class="bg-gray-50 p-6 rounded-lg">
+                            <p class="text-gray-500">Puntuación para el puesto:</p>
+                            <span id="report-score" class="font-bold text-4xl text-green-600">--</span>
+                            
+                            <div id="report-sub-scores" class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4 text-center border-b pb-6 mb-6">
+                                <!-- Sub-scores will be injected here by JS -->
+                            </div>
+                            
+                            <div id="report-justificaciones-container" class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                </div>
+
+                        </div>
+                    </div>
+
+                    <h3 class="section-title">Datos Personales</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                        <div>
+                            <label for="report-nombre" class="block text-sm font-medium text-gray-700">Nombre completo</label>
+                            <input type="text" id="report-nombre" class="mt-1 input-field">
+                        </div>
+                        <div>
+                            <label for="report-email" class="block text-sm font-medium text-gray-700">Email</label>
+                            <input type="email" id="report-email" class="mt-1 input-field">
+                        </div>
+                        <div>
+                            <label for="report-telefono" class="block text-sm font-medium text-gray-700">Teléfono</label>
+                            <input type="tel" id="report-telefono" class="mt-1 input-field">
+                        </div>
+                        <div>
+                            <label for="report-nacimiento" class="block text-sm font-medium text-gray-700">Fecha de nacimiento</label>
+                            <input type="text" id="report-nacimiento" class="mt-1 input-field" placeholder="YYYY-MM-DD">
+                        </div>
+                        <div>
+                            <label for="report-ciudad" class="block text-sm font-medium text-gray-700">Ciudad de residencia</label>
+                            <input type="text" id="report-ciudad" class="mt-1 input-field">
+                        </div>
+                        <div>
+                            <label for="report-linkedin" class="block text-sm font-medium text-gray-700">Perfil de LinkedIn</label>
+                            <input type="url" id="report-linkedin" class="mt-1 input-field">
+                        </div>
+                    </div>
+                    
+                    <h3 class="section-title flex justify-between items-center">
+                        <span>Formación Académica y Otra Formación</span>
+                        <button id="add-formacion-btn" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-1 px-3 rounded-lg flex items-center text-sm">
+                            <i data-lucide="plus" class="mr-1 h-4 w-4"></i> Añadir
+                        </button>
+                    </h3>
+                    <div id="report-formacion-container" class="space-y-4"></div>
+                    <div class="mt-6">
+                        <label for="report-miscelanea" class="block text-sm font-medium text-gray-700 mb-1">Miscelánea / Otra Formación</label>
+                        <textarea id="report-miscelanea" rows="4" class="input-field" placeholder="Anotaciones sobre certificaciones, cursos, etc."></textarea>
+                    </div>
+
+                    
+                    <h3 class="section-title mt-8">Referencias</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label for="report-ref-internas" class="block text-sm font-medium text-gray-700 mb-1">Referencias Internas</label>
+                            <textarea id="report-ref-internas" rows="4" class="input-field" placeholder="Anotaciones..."></textarea>
+                        </div>
+                        <div>
+                            <label for="report-ref-externas" class="block text-sm font-medium text-gray-700 mb-1">Referencias Externas</label>
+                            <textarea id="report-ref-externas" rows="4" class="input-field" placeholder="Anotaciones..."></textarea>
+                        </div>
+                    </div>
+
+                    <h3 class="section-title flex justify-between items-center mt-8">
+                        <span>Trayectoria Profesional</span>
+                        <button id="add-trayectoria-btn" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-1 px-3 rounded-lg flex items-center text-sm">
+                            <i data-lucide="plus" class="mr-1 h-4 w-4"></i> Añadir
+                        </button>
+                    </h3>
+                    <div id="report-trayectoria-container" class="space-y-4"></div>
+                    
+                    <h3 class="section-title mt-8">Valoración Perfil Competencial</h3>
+                    <textarea id="report-valoracion-competencial" rows="6" class="input-field" placeholder="Valoración global..."></textarea>
+                    
+                    <h3 class="section-title mt-8">Observaciones</h3>
+                    <textarea id="report-observaciones" rows="6" class="input-field" placeholder="Otras observaciones..."></textarea>
+
+                    <h3 class="section-title mt-8">Evaluación de Competencias</h3>
+                    
+                    <div class="flex justify-between items-center mt-4">
+                        <h4 class="font-semibold text-gray-800">Idiomas</h4>
+                         <button id="add-idioma-btn" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-1 px-3 rounded-lg flex items-center text-sm">
+                            <i data-lucide="plus" class="mr-1 h-4 w-4"></i> Añadir
+                        </button>
+                    </div>
+                    <div id="report-idiomas-container" class="space-y-4 mt-3"></div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-x-12 gap-y-6 mt-6">
+                        <div>
+                            <h4 class="font-semibold text-gray-800 mb-3">Soft Skills</h4>
+                            <div id="report-soft-skills-container" class="space-y-3"></div>
+                            <p class="text-xs text-gray-500 mt-3 italic">
+                                A: Perfecto Dominio; B: Dominio; C: Práctica Básica; D: No adquirido
+                            </p>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold text-gray-800 mb-3">Hard Skills</h4>
+                            <div id="report-hard-skills-container" class="space-y-3"></div>
+                            <p class="text-xs text-gray-500 mt-3 italic">
+                                A: Perfecto Dominio; B: Dominio; C: Práctica Básica; D: No adquirido
+                            </p>
+                        </div>
+                    </div>
+
+                    <h3 class="section-title mt-8">Preguntas para la entrevista</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div>
+                            <h4 class="font-semibold text-gray-800 mb-3 text-center">Evaluador 1</h4>
+                            <div id="report-preguntas-tecnicas" class="space-y-3"></div>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold text-gray-800 mb-3 text-center">Evaluador 2</h4>
+                            <div id="report-preguntas-rrhh" class="space-y-3"></div>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold text-gray-800 mb-3 text-center">Evaluador 3</h4>
+                            <div id="report-preguntas-manager" class="space-y-3"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+    
+    <div id="puesto-modal" class="fixed inset-0 z-50 items-center justify-center hidden">
+        <div class="modal-backdrop absolute inset-0"></div>
+        <div class="card relative w-full max-w-2xl mx-4 p-8 overflow-y-auto max-h-screen">
+            <div class="flex justify-between items-start">
+                <h3 id="modal-title" class="text-2xl font-bold text-gray-800 mb-6">Crear Nuevo Puesto</h3>
+                <button id="toggle-ponderaciones-btn" class="bg-indigo-100 text-indigo-700 font-semibold py-2 px-3 rounded-lg text-sm hover:bg-indigo-200 transition-colors">Ponderaciones</button>
+            </div>
+            
+            <form id="puesto-form">
+                <div id="new-puesto-ponderaciones-container" class="hidden bg-gray-50 p-4 rounded-lg mb-6 border">
+                    <h4 class="font-semibold text-gray-700 mb-4">Ponderaciones de Puntuación</h4>
+                     <div class="ponderations-wrapper space-y-4" data-prefix="new-puesto">
+                        <div>
+                            <div class="flex justify-between items-center mb-1">
+                                <label for="new-puesto-slider-formacion" class="text-sm font-medium text-gray-600">Ponderación Formación</label>
+                                <span class="text-sm font-bold text-gray-800 bg-gray-200 rounded-md px-2 py-0.5">25%</span>
+                            </div>
+                            <input type="range" id="new-puesto-slider-formacion" min="0" max="100" value="25" class="w-full">
+                        </div>
+                        <div>
+                            <div class="flex justify-between items-center mb-1">
+                                <label for="new-puesto-slider-experiencia" class="text-sm font-medium text-gray-600">Ponderación Experiencia</label>
+                                <span class="text-sm font-bold text-gray-800 bg-gray-200 rounded-md px-2 py-0.5">25%</span>
+                            </div>
+                            <input type="range" id="new-puesto-slider-experiencia" min="0" max="100" value="25" class="w-full">
+                        </div>
+                        <div>
+                            <div class="flex justify-between items-center mb-1">
+                                <label for="new-puesto-slider-soft" class="text-sm font-medium text-gray-600">Ponderación Soft Skills</label>
+                                <span class="text-sm font-bold text-gray-800 bg-gray-200 rounded-md px-2 py-0.5">25%</span>
+                            </div>
+                            <input type="range" id="new-puesto-slider-soft" min="0" max="100" value="25" class="w-full">
+                        </div>
+                        <div>
+                            <div class="flex justify-between items-center mb-1">
+                                <label for="new-puesto-slider-hard" class="text-sm font-medium text-gray-600">Ponderación Hard Skills</label>
+                                <span class="text-sm font-bold text-gray-800 bg-gray-200 rounded-md px-2 py-0.5">25%</span>
+                            </div>
+                            <input type="range" id="new-puesto-slider-hard" min="0" max="100" value="25" class="w-full">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label for="puesto-nombre" class="block text-gray-700 font-semibold mb-2">Nombre del puesto</label>
+                    <input type="text" id="puesto-nombre" class="w-full border rounded-lg p-2" required>
+                </div>
+                 <div class="mb-4">
+                    <label for="puesto-descripcion-corta" class="block text-gray-700 font-semibold mb-2">Descripción corta</label>
+                    <input type="text" id="puesto-descripcion-corta" class="w-full border rounded-lg p-2" required>
+                </div>
+                <div class="mb-4">
+                    <label for="puesto-descripcion-larga" class="block text-gray-700 font-semibold mb-2">Descripción del puesto</label>
+                    <textarea id="puesto-descripcion-larga" rows="4" class="w-full border rounded-lg p-2" required></textarea>
+                </div>
+                <div class="mb-4">
+                    <label for="puesto-mision" class="block text-gray-700 font-semibold mb-2">Misión del puesto</label>
+                    <textarea id="puesto-mision" rows="3" class="w-full border rounded-lg p-2" required></textarea>
+                </div>
+                <div class="mb-6">
+                    <label for="puesto-competencias" class="block text-gray-700 font-semibold mb-2">Competencias del puesto (una por línea)</label>
+                    <textarea id="puesto-competencias" rows="4" class="w-full border rounded-lg p-2" placeholder="Ej: Liderazgo&#10;Python&#10;SQL" required></textarea>
+                </div>
+                <div class="flex justify-end mt-8">
+                    <button type="button" id="modal-cancel-btn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-lg mr-2">Cancelar</button>
+                    <button type="submit" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg">Guardar Puesto</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="ponderaciones-modal" class="fixed inset-0 z-50 items-center justify-center hidden">
+        <div class="modal-backdrop absolute inset-0"></div>
+        <div class="card relative w-full max-w-lg mx-4 p-8">
+            <h3 id="ponderaciones-modal-title" class="text-2xl font-bold text-gray-800 mb-6">Gestionar Ponderaciones</h3>
+            <div class="ponderations-wrapper space-y-4" data-prefix="edit-puesto">
+                <div>
+                    <div class="flex justify-between items-center mb-1">
+                        <label for="edit-puesto-slider-formacion" class="text-sm font-medium text-gray-600">Ponderación Formación</label>
+                        <span class="text-sm font-bold text-gray-800 bg-gray-200 rounded-md px-2 py-0.5">0%</span>
+                    </div>
+                    <input type="range" id="edit-puesto-slider-formacion" min="0" max="100" value="0" class="w-full">
+                </div>
+                <div>
+                    <div class="flex justify-between items-center mb-1">
+                        <label for="edit-puesto-slider-experiencia" class="text-sm font-medium text-gray-600">Ponderación Experiencia</label>
+                        <span class="text-sm font-bold text-gray-800 bg-gray-200 rounded-md px-2 py-0.5">0%</span>
+                    </div>
+                    <input type="range" id="edit-puesto-slider-experiencia" min="0" max="100" value="0" class="w-full">
+                </div>
+                <div>
+                    <div class="flex justify-between items-center mb-1">
+                        <label for="edit-puesto-slider-soft" class="text-sm font-medium text-gray-600">Ponderación Soft Skills</label>
+                        <span class="text-sm font-bold text-gray-800 bg-gray-200 rounded-md px-2 py-0.5">0%</span>
+                    </div>
+                    <input type="range" id="edit-puesto-slider-soft" min="0" max="100" value="0" class="w-full">
+                </div>
+                <div>
+                    <div class="flex justify-between items-center mb-1">
+                        <label for="edit-puesto-slider-hard" class="text-sm font-medium text-gray-600">Ponderación Hard Skills</label>
+                        <span class="text-sm font-bold text-gray-800 bg-gray-200 rounded-md px-2 py-0.5">0%</span>
+                    </div>
+                    <input type="range" id="edit-puesto-slider-hard" min="0" max="100" value="0" class="w-full">
+                </div>
+            </div>
+            <div class="flex justify-end mt-8">
+                <button type="button" id="ponderaciones-modal-cancel-btn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-lg mr-2">Cancelar</button>
+                <button type="button" id="ponderaciones-modal-save-btn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg">Guardar Cambios</button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // --- CONSTANTES ---
+        const API_URL = 'http://127.0.0.1:5000';
+
+        // --- ICONOS ---
+        lucide.createIcons();
+    
+        // --- DATOS GLOBALES ---
+        let db = { puestos: [], currentReportData: null };
+        
+        // --- DOM Elements ---
+        const views = {
+            dashboard: document.getElementById('dashboard-view'),
+            puestos: document.getElementById('puestos-view'),
+            vacantes: document.getElementById('vacantes-view'),
+            vacanteDetail: document.getElementById('vacante-detail-view'),
+            candidatoReport: document.getElementById('candidato-report-view')
+        };
+        const navLinks = { dashboard: document.getElementById('nav-dashboard'), puestos: document.getElementById('nav-puestos'), vacantes: document.getElementById('nav-vacantes') };
+        const puestoModal = document.getElementById('puesto-modal');
+        const ponderacionesModal = document.getElementById('ponderaciones-modal');
+        const puestoForm = document.getElementById('puesto-form');
+        const backToVacantesBtn = document.getElementById('back-to-vacantes');
+        const backToVacanteDetailBtn = document.getElementById('back-to-vacante-detail');
+
+        // --- State Management ---
+        let currentView = 'dashboard';
+        let currentPuestoIdForDetail = null; 
+        let currentCandidatoId = null;
+        let currentPuestoIdForEdit = null;
+        let currentPuestoIdForPonderaciones = null;
+
+        // --- Navigation Logic ---
+        const showView = (viewName) => {
+            Object.values(views).forEach(view => view.classList.add('hidden'));
+            views[viewName].classList.remove('hidden');
+            Object.values(navLinks).forEach(link => link.classList.remove('active'));
+            if(navLinks[viewName]) navLinks[viewName].classList.add('active');
+            currentView = viewName;
+        };
+
+        navLinks.dashboard.addEventListener('click', (e) => { e.preventDefault(); renderDashboard(); showView('dashboard'); });
+        navLinks.puestos.addEventListener('click', async (e) => { e.preventDefault(); await renderPuestos(); showView('puestos'); });
+        navLinks.vacantes.addEventListener('click', async (e) => { e.preventDefault(); await fetchPuestos(); renderVacantes(); showView('vacantes'); });
+        backToVacantesBtn.addEventListener('click', () => { renderVacantes(); showView('vacantes'); });
+        backToVacanteDetailBtn.addEventListener('click', () => { 
+            if(currentPuestoIdForDetail) {
+                renderVacanteDetail(currentPuestoIdForDetail); 
+                showView('vacanteDetail'); 
+            }
+        });
+
+        // --- Modal Logic ---
+        const closePuestoModal = () => {
+            puestoModal.classList.replace('flex', 'hidden');
+            document.getElementById('new-puesto-ponderaciones-container').classList.add('hidden');
+            currentPuestoIdForEdit = null; // Reset edit state
+        };
+        const closePonderacionesModal = () => {
+            ponderacionesModal.classList.replace('flex', 'hidden');
+            currentPuestoIdForPonderaciones = null;
+        };
+
+        document.getElementById('crear-puesto-btn').addEventListener('click', () => {
+            puestoForm.reset();
+            currentPuestoIdForEdit = null;
+            document.getElementById('modal-title').textContent = 'Crear Nuevo Puesto';
+            document.getElementById('toggle-ponderaciones-btn').style.display = 'block';
+            // Reset sliders for new post to 25%
+            const slidersContainer = document.querySelector('#new-puesto-ponderaciones-container .ponderations-wrapper');
+            const sliders = slidersContainer.querySelectorAll('input[type="range"]');
+            sliders.forEach(slider => slider.value = 25);
+            slidersContainer.querySelectorAll('span').forEach(span => span.textContent = '25%');
+            puestoModal.classList.replace('hidden', 'flex');
+        });
+        puestoModal.querySelector('.modal-backdrop').addEventListener('click', closePuestoModal);
+        document.getElementById('modal-cancel-btn').addEventListener('click', closePuestoModal);
+        
+        ponderacionesModal.querySelector('.modal-backdrop').addEventListener('click', closePonderacionesModal);
+        document.getElementById('ponderaciones-modal-cancel-btn').addEventListener('click', closePonderacionesModal);
+        
+        document.getElementById('toggle-ponderaciones-btn').addEventListener('click', () => {
+            document.getElementById('new-puesto-ponderaciones-container').classList.toggle('hidden');
+        });
+        
+        // --- Render Functions ---
+        const renderDashboard = async () => {
+            document.getElementById('dashboard-puestos-count').textContent = '...';
+            document.getElementById('dashboard-vacantes-count').textContent = '...';
+            document.getElementById('dashboard-candidatos-count').textContent = '...';
+            try {
+                const [puestosResponse, countResponse] = await Promise.all([
+                    fetch(`${API_URL}/api/puestos`),
+                    fetch(`${API_URL}/api/candidatos/count`)
+                ]);
+                if (!puestosResponse.ok) throw new Error('Error al cargar puestos');
+                db.puestos = await puestosResponse.json();
+                if (!countResponse.ok) throw new Error('Error al cargar recuento de candidatos');
+                const countData = await countResponse.json();
+                document.getElementById('dashboard-puestos-count').textContent = db.puestos.length;
+                document.getElementById('dashboard-vacantes-count').textContent = db.puestos.filter(p => p.VACANTE === 1).length;
+                document.getElementById('dashboard-candidatos-count').textContent = countData.total;
+            } catch (error) { 
+                console.error("Error al renderizar el dashboard:", error);
+                document.getElementById('dashboard-puestos-count').textContent = 'Error'; 
+                document.getElementById('dashboard-vacantes-count').textContent = 'Error';
+                document.getElementById('dashboard-candidatos-count').textContent = 'Error';
+            }
+        };
+
+        const fetchPuestos = async () => {
+             try {
+                const response = await fetch(`${API_URL}/api/puestos`);
+                if (!response.ok) { throw new Error(`HTTP error! status: ${response.status}`); }
+                db.puestos = await response.json();
+            } catch (error) { console.error("Error al cargar los puestos:", error); throw error; }
+        }
+
+        const renderPuestos = async () => {
+            const list = document.getElementById('puestos-list');
+            list.innerHTML = '<p class="text-gray-500 col-span-full">Cargando...</p>';
+            try {
+                await fetchPuestos();
+                list.innerHTML = '';
+                if (db.puestos.length === 0) {
+                    list.innerHTML = '<p class="text-gray-500 col-span-full">No hay puestos. ¡Crea el primero!</p>';
+                    return;
+                }
+                db.puestos.forEach(puesto => {
+                    const card = document.createElement('div');
+                    card.className = 'card p-6 flex flex-col';
+                    const esVacanteAbierta = puesto.VACANTE === 1;
+                    const buttonHtml = esVacanteAbierta
+                        ? `<button disabled class="bg-gray-400 text-white font-semibold py-2 px-4 rounded-lg cursor-not-allowed flex-grow">Vacante Abierta</button>`
+                        : `<button data-puesto-id="${puesto.id}" class="abrir-vacante-btn bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg flex-grow">Abrir Vacante</button>`;
+                    
+                    card.innerHTML = `<div class="flex-grow">
+                            <h3 class="text-xl font-bold text-gray-800 mb-2">${puesto.titulo}</h3>
+                            <p class="text-gray-600 mb-4 h-24 overflow-hidden">${puesto.MISION}</p>
+                        </div>
+                        <div class="flex items-center mt-4 border-t pt-4 space-x-2">
+                             <button data-puesto-id="${puesto.id}" title="Editar Puesto" class="editar-puesto-btn text-gray-400 hover:text-blue-600 p-2 rounded-lg hover:bg-gray-100">
+                                <i data-lucide="edit" class="h-5 w-5"></i>
+                            </button>
+                             <button data-puesto-id="${puesto.id}" title="Ponderaciones" class="ponderaciones-btn text-gray-400 hover:text-indigo-600 p-2 rounded-lg hover:bg-gray-100">
+                                <i data-lucide="sliders-horizontal" class="h-5 w-5"></i>
+                            </button>
+                            <div class="flex-grow"></div>
+                            ${buttonHtml}
+                        </div>`;
+                    list.appendChild(card);
+                });
+                lucide.createIcons();
+            } catch (error) { list.innerHTML = '<p class="text-red-500 col-span-full">Error al cargar puestos.</p>'; }
+        };
+        
+        const renderVacantes = () => {
+            const list = document.getElementById('vacantes-list');
+            list.innerHTML = '';
+            const abiertas = db.puestos.filter(p => p.VACANTE === 1);
+            if (abiertas.length === 0) {
+                list.innerHTML = '<div class="card p-6 text-center"><p class="text-gray-500">No hay vacantes abiertas.</p></div>';
+                return;
+            }
+            abiertas.forEach(puesto => {
+                const card = document.createElement('div');
+                card.className = 'card p-6';
+                card.innerHTML = `<div class="flex justify-between items-center">
+                        <div><h3 class="text-2xl font-bold text-green-700">${puesto.titulo}</h3></div>
+                        <div class="flex items-center space-x-2">
+                             <button data-puesto-id="${puesto.id}" class="ver-ranking-btn bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg flex items-center"><i data-lucide="bar-chart-3" class="mr-2 h-5 w-5"></i> Ver Ranking</button>
+                             <button data-puesto-id="${puesto.id}" class="cerrar-vacante-btn bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg flex items-center"><i data-lucide="x-circle" class="mr-2 h-5 w-5"></i> Cerrar</button>
+                        </div></div>`;
+                list.appendChild(card);
+            });
+            lucide.createIcons();
+        };
+
+        // MODIFICACIÓN: Función actualizada para separar candidatos aptos
+        const renderVacanteDetail = async (puestoId) => {
+            currentPuestoIdForDetail = puestoId;
+            const puesto = db.puestos.find(p => p.id === puestoId);
+            if (!puesto) { console.error("Puesto no encontrado"); return; }
+            document.getElementById('vacante-detail-title').textContent = puesto.titulo;
+
+            const aptosWrapper = document.getElementById('aptos-container-wrapper');
+            const aptosContainer = document.getElementById('aptos-candidatos-list');
+            const rankingContainer = document.getElementById('top-candidatos-list');
+            const showMoreContainer = document.getElementById('show-more-container');
+
+            // Resetear contenedores
+            aptosWrapper.classList.add('hidden');
+            aptosContainer.innerHTML = '';
+            rankingContainer.innerHTML = '<p class="text-gray-500">Cargando candidatos...</p>';
+            if(showMoreContainer) showMoreContainer.innerHTML = '';
+
+            try {
+                const response = await fetch(`${API_URL}/api/vacante/${encodeURIComponent(puesto.id)}/candidatos`);
+                if (!response.ok) throw new Error(`Error HTTP: ${response.status}`);
+                const todosLosCandidatos = await response.json();
+
+                rankingContainer.innerHTML = ''; // Limpiar mensaje de carga
+
+                if (todosLosCandidatos.length === 0) {
+                    rankingContainer.innerHTML = '<p class="text-gray-500">No se encontraron candidatos para esta vacante.</p>';
+                    return;
+                }
+
+                const candidatosAptos = todosLosCandidatos.filter(c => c.apto === 1);
+                const restoCandidatos = todosLosCandidatos.filter(c => c.apto !== 1);
+
+                const createCandidatoElementHTML = (candidato) => {
+                    return `
+                        <div class="flex-grow">
+                            <p class="font-bold text-lg text-gray-800">${candidato.nombreCompleto}</p>
+                            <p class="text-gray-500">${candidato.localidad}</p>
+                        </div>
+                        <div class="text-right mr-6">
+                            <span class="text-xs text-gray-500">Puntuación</span>
+                            <p class="font-bold text-xl text-green-600">${candidato.score}</p>
+                        </div>
+                        <button data-candidato-id="${candidato.id}" data-puesto-id="${puesto.id}" data-score="${candidato.score}" class="ver-informe-btn bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg">Ver Informe</button>
+                    `;
+                };
+
+                // Renderizar candidatos aptos
+                if (candidatosAptos.length > 0) {
+                    aptosWrapper.classList.remove('hidden');
+                    candidatosAptos.forEach(candidato => {
+                        const candidatoDiv = document.createElement('div');
+                        candidatoDiv.className = "border-green-200 border rounded-lg p-4 flex justify-between items-center bg-white hover:bg-green-50 transition-all duration-300";
+                        candidatoDiv.innerHTML = createCandidatoElementHTML(candidato);
+                        aptosContainer.appendChild(candidatoDiv);
+                    });
+                }
+
+                // Renderizar el resto de candidatos
+                if (restoCandidatos.length === 0) {
+                    if (candidatosAptos.length > 0) {
+                        rankingContainer.innerHTML = '<p class="text-gray-500 text-center">No hay más candidatos en el ranking general.</p>';
+                    }
+                } else {
+                    restoCandidatos.forEach((candidato, index) => {
+                        const candidatoDiv = document.createElement('div');
+                        candidatoDiv.className = "border rounded-lg p-4 flex justify-between items-center hover:bg-gray-50 transition-all duration-300";
+                        if (index >= 5) {
+                            candidatoDiv.classList.add('hidden', 'extra-candidato');
+                        }
+                        candidatoDiv.innerHTML = createCandidatoElementHTML(candidato);
+                        rankingContainer.appendChild(candidatoDiv);
+                    });
+
+                    if (restoCandidatos.length > 5) {
+                        const showMoreBtn = document.createElement('button');
+                        showMoreBtn.id = 'show-more-btn';
+                        showMoreBtn.className = 'bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-lg transition-colors';
+                        showMoreBtn.textContent = `Mostrar ${restoCandidatos.length - 5} más`;
+                        
+                        showMoreBtn.addEventListener('click', () => {
+                            document.querySelectorAll('.extra-candidato').forEach(el => el.classList.remove('hidden'));
+                            showMoreBtn.remove();
+                        }, { once: true });
+
+                        if(showMoreContainer) showMoreContainer.appendChild(showMoreBtn);
+                    }
+                }
+            } catch (error) {
+                console.error("Error al cargar candidatos:", error);
+                rankingContainer.innerHTML = '<p class="text-red-500">No se pudieron cargar los candidatos.</p>';
+            }
+        };
+
+        const renderCandidatoReport = async (candidatoId, puestoId, initialScore) => {
+            currentCandidatoId = candidatoId;
+            
+            const reportContainer = document.getElementById('report-content');
+            const originalHtml = reportContainer.innerHTML;
+            reportContainer.innerHTML = '<p class="text-center text-gray-500 p-8">Cargando informe...</p>';
+            
+            try {
+                const response = await fetch(`${API_URL}/api/candidato/${candidatoId}/reporte/${encodeURIComponent(puestoId)}`);
+                if (!response.ok) throw new Error(`Error HTTP: ${response.status}`);
+                const data = await response.json();
+                db.currentReportData = data;
+                
+                reportContainer.innerHTML = originalHtml;
+                
+                document.getElementById('report-apto').value = data.apto === null ? 'no_definido' : data.apto;
+                document.getElementById('report-score').textContent = data.score ?? initialScore ?? '--';
+
+                const subScoresContainer = document.getElementById('report-sub-scores');
+                subScoresContainer.innerHTML = `
+                    <div><p class="text-sm text-gray-500">Puntuación Formación</p><p class="font-bold text-xl text-gray-800">${(data.score_formacion * 10).toFixed(0)}</p></div>
+                    <div><p class="text-sm text-gray-500">Puntuación Experiencia</p><p class="font-bold text-xl text-gray-800">${(data.score_experiencia * 10).toFixed(0)}</p></div>
+                    <div><p class="text-sm text-gray-500">Puntuación Soft Skills</p><p class="font-bold text-xl text-gray-800">${(data.score_soft_skill * 10).toFixed(0)}</p></div>
+                    <div><p class="text-sm text-gray-500">Puntuación Hard Skills</p><p class="font-bold text-xl text-gray-800">${(data.score_hard_skill * 10).toFixed(0)}</p></div>
+                `;
+
+                const justificacionesContainer = document.getElementById('report-justificaciones-container');
+                justificacionesContainer.innerHTML = '';
+                const justificaciones = data.justificacion || [];
+
+                for (let i = 0; i < 3; i++) {
+                    const item = justificaciones[i];
+                    const div = document.createElement('div');
+                    const evaluatorName = item ? item.evaluador : `Evaluador ${i + 1}`;
+                    const justificationText = item ? item.texto : 'No hay datos.';
+                    
+                    div.innerHTML = `
+                        <label class="block text-sm font-medium text-gray-700 mb-1">${evaluatorName}</label>
+                        <textarea rows="5" class="input-field" readonly>${justificationText}</textarea>
+                    `;
+                    justificacionesContainer.appendChild(div);
+                }
+
+                document.getElementById('report-nombre').value = data.nombre ?? '';
+                document.getElementById('report-email').value = data.email ?? '';
+                document.getElementById('report-telefono').value = data.telefono ?? '';
+                document.getElementById('report-nacimiento').value = data.fecha_nacimiento ?? '';
+                document.getElementById('report-ciudad').value = data.ciudad ?? '';
+                document.getElementById('report-linkedin').value = data.linkedin ?? '';
+                document.getElementById('report-ref-internas').value = data.ref_internas ?? '';
+                document.getElementById('report-ref-externas').value = data.ref_externas ?? '';
+                document.getElementById('report-valoracion-competencial').value = data.valoracion_perfil ?? '';
+                document.getElementById('report-observaciones').value = data.observaciones ?? '';
+                document.getElementById('report-miscelanea').value = data.miscelanea_formacion ?? '';
+
+                renderDynamicList('formacion', data.formacion, createFormacionItem);
+                renderDynamicList('trayectoria', data.trayectoria_profesional, createTrayectoriaItem);
+                renderDynamicList('idiomas', data.idiomas, createIdiomaItem);
+                
+                const renderPreguntas = (containerId, preguntas) => {
+                    const container = document.getElementById(containerId);
+                    container.innerHTML = '';
+                    if(Array.isArray(preguntas) && preguntas.length > 0) {
+                        preguntas.forEach(q => { container.innerHTML += `<div class="p-3 bg-gray-100 rounded-md text-gray-700 flex items-start"><i data-lucide="help-circle" class="w-4 h-4 mr-2 mt-1 flex-shrink-0 text-gray-500"></i><span>${q}</span></div>`});
+                    } else { container.innerHTML = '<p class="text-gray-500 text-sm">No hay preguntas.</p>'; }
+                }
+                const preguntas = data.preguntas_entrevista || {};
+                renderPreguntas('report-preguntas-tecnicas', preguntas.tecnicas);
+                renderPreguntas('report-preguntas-rrhh', preguntas.rrhh);
+                renderPreguntas('report-preguntas-manager', preguntas.manager);
+                
+                const createSkillRating = (skill, type) => {
+                    const skillName = skill[type === 'soft' ? 'SOFT_SKILL' : 'HARD_SKILL'];
+                    const skillId = skill[type === 'soft' ? 'ID_SOFT_SKILL' : 'ID_HARD_SKILL'];
+                    if (!skillName) return '';
+                    return `<div class="flex items-center justify-between" data-skill-id="${skillId}" data-skill-type="${type}">
+                            <span class="text-gray-700">${skillName}</span>
+                            <div class="flex items-center space-x-3 text-sm">
+                                ${['A', 'B', 'C', 'D'].map(val => `<label class="flex items-center cursor-pointer"><input type="radio" name="skill-${type}-${skillId}" value="${val}" class="mr-1 accent-green-600" ${val === skill.VALORACION ? 'checked' : ''}>${val}</label>`).join('')}
+                            </div></div>`;
+                };
+
+                const softSkillsContainer = document.getElementById('report-soft-skills-container');
+                softSkillsContainer.innerHTML = Array.isArray(data.soft_skills) && data.soft_skills.length > 0 ? data.soft_skills.map(skill => createSkillRating(skill, 'soft')).join('') : '<p class="text-gray-500 text-sm">No hay datos.</p>';
+                const hardSkillsContainer = document.getElementById('report-hard-skills-container');
+                hardSkillsContainer.innerHTML = Array.isArray(data.hard_skills) && data.hard_skills.length > 0 ? data.hard_skills.map(skill => createSkillRating(skill, 'hard')).join('') : '<p class="text-gray-500 text-sm">No hay datos.</p>';
+
+                lucide.createIcons();
+
+            } catch(error) {
+                console.error("Error al cargar el informe del candidato:", error);
+                reportContainer.innerHTML = `<div class="p-8"><p class="text-red-500">No se pudo cargar el informe del candidato. Inténtelo de nuevo más tarde.</p></div>`;
+            }
+        };
+
+        // --- Helper Functions for Dynamic Lists ---
+        const renderDynamicList = (type, items, createFn) => {
+            const container = document.getElementById(`report-${type}-container`);
+            container.innerHTML = '';
+            if (Array.isArray(items) && items.length > 0) {
+                items.forEach(item => container.appendChild(createFn(item)));
+            } else {
+                container.innerHTML = `<p class="text-gray-500 text-sm italic">No hay datos. Puede añadir nuevos.</p>`;
+            }
+        };
+
+        const createFormacionItem = (item = {}) => {
+            const div = document.createElement('div');
+            div.className = 'dynamic-item grid grid-cols-1 md:grid-cols-2 gap-4';
+            div.innerHTML = `
+                <i data-lucide="x" class="delete-btn h-5 w-5"></i>
+                <div><label class="block text-sm font-medium text-gray-600">Nombre</label><input type="text" data-key="nombre_formacion" class="mt-1 input-field" value="${item.nombre_formacion || ''}"></div>
+                <div><label class="block text-sm font-medium text-gray-600">Centro</label><input type="text" data-key="centro_estudios" class="mt-1 input-field" value="${item.centro_estudios || ''}"></div>
+                <div class="md:col-span-2"><label class="block text-sm font-medium text-gray-600">Año Finalización</label><input type="text" data-key="año_finalizacion" class="mt-1 input-field" value="${item.año_finalizacion || ''}"></div>`;
+            lucide.createIcons({
+                nodes: [div.querySelector('.delete-btn')]
+            });
+            return div;
+        };
+        const createTrayectoriaItem = (item = {}) => {
+            const div = document.createElement('div');
+            div.className = 'dynamic-item grid grid-cols-1 md:grid-cols-2 gap-4';
+            div.innerHTML = `
+                <i data-lucide="x" class="delete-btn h-5 w-5"></i>
+                <div><label class="block text-sm font-medium text-gray-600">Puesto</label><input type="text" data-key="puesto" class="mt-1 input-field" value="${item.puesto || ''}"></div>
+                <div><label class="block text-sm font-medium text-gray-600">Empresa</label><input type="text" data-key="empresa" class="mt-1 input-field" value="${item.empresa || ''}"></div>
+                <div><label class="block text-sm font-medium text-gray-600">Fecha Inicio</label><input type="text" data-key="fecha_inicio" class="mt-1 input-field" value="${item.fecha_inicio || ''}"></div>
+                <div><label class="block text-sm font-medium text-gray-600">Fecha Fin</label><input type="text" data-key="fecha_fin" class="mt-1 input-field" value="${item.fecha_fin || ''}"></div>
+                <div class="md:col-span-2"><label class="block text-sm font-medium text-gray-600">Descripción</label><textarea data-key="descripcion_puesto" rows="3" class="mt-1 input-field">${item.descripcion_puesto || ''}</textarea></div>`;
+            lucide.createIcons({
+                nodes: [div.querySelector('.delete-btn')]
+            });
+            return div;
+        };
+        const createIdiomaItem = (item = {}) => {
+            const div = document.createElement('div');
+            div.className = 'dynamic-item grid grid-cols-1 md:grid-cols-2 gap-4';
+            div.innerHTML = `
+                <i data-lucide="x" class="delete-btn h-5 w-5"></i>
+                <div><label class="block text-sm font-medium text-gray-600">Idioma</label><input type="text" data-key="idioma" class="mt-1 input-field" value="${item.idioma || ''}"></div>
+                <div><label class="block text-sm font-medium text-gray-600">Nivel</label><input type="text" data-key="nivel" class="mt-1 input-field" value="${item.nivel || ''}"></div>`;
+            lucide.createIcons({
+                nodes: [div.querySelector('.delete-btn')]
+            });
+            return div;
+        };
+        
+        // Helper function to add dynamic items, removing the "No hay datos" message if present.
+        const handleAddItemClick = (containerId, createFn) => {
+            const container = document.getElementById(containerId);
+            // The "No hay datos" message is a <p> with specific classes.
+            const noDataMsg = container.querySelector('p.text-gray-500.text-sm.italic'); 
+            if (noDataMsg) {
+                container.innerHTML = ''; // Clear the message
+            }
+            // Add the new item
+            container.appendChild(createFn());
+        };
+
+        // --- PDF Export Logic ---
+        const exportReportToPDF = async () => {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF({
+                orientation: 'p',
+                unit: 'mm',
+                format: 'a4'
+            });
+
+            if (!db.currentReportData) {
+                alert("No hay datos del informe para exportar.");
+                return;
+            }
+            
+            const data = db.currentReportData;
+            const SIN_INFO = "Sin información";
+            let y = 15; // Vertical position tracker
+            const pageHeight = doc.internal.pageSize.height;
+            const margin = 15;
+            const maxWidth = doc.internal.pageSize.width - margin * 2;
+
+            const checkPageBreak = (heightNeeded) => {
+                if (y + heightNeeded > pageHeight - margin) {
+                    doc.addPage();
+                    y = margin;
+                }
+            };
+
+            const addTitle = (title) => {
+                checkPageBreak(15);
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(14);
+                doc.setTextColor(31, 41, 55); // gray-800
+                doc.text(title, margin, y);
+                doc.setDrawColor(23, 183, 77); // green-600
+                doc.setLineWidth(0.5);
+                doc.line(margin, y + 2, maxWidth + margin, y + 2);
+                y += 10;
+            };
+            
+            const valueX = margin + 50;
+            const textWidth = doc.internal.pageSize.width - valueX - margin;
+
+            const addText = (label, value) => {
+                const text = value || SIN_INFO;
+                const splitText = doc.splitTextToSize(text, textWidth);
+                const heightNeeded = (splitText.length * 4) + 4;
+                checkPageBreak(heightNeeded);
+
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(10);
+                doc.setTextColor(55, 65, 81); // gray-600
+                doc.text(`${label}:`, margin, y, { baseline: 'top' });
+                
+                doc.setFont('helvetica', 'normal');
+                doc.setTextColor(17, 24, 39); // gray-900
+                doc.text(splitText, valueX, y, { baseline: 'top' });
+                y += heightNeeded;
+            };
+
+            const addParagraph = (value) => {
+                const text = value || SIN_INFO;
+                const splitText = doc.splitTextToSize(text, maxWidth);
+                const heightNeeded = (splitText.length * 4) + 4;
+                checkPageBreak(heightNeeded);
+
+                doc.setFont('helvetica', 'normal');
+                doc.setFontSize(10);
+                doc.setTextColor(17, 24, 39); // gray-900
+                doc.text(splitText, margin, y);
+                y += heightNeeded;
+            };
+            
+            // --- PDF Content Generation ---
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(22);
+            doc.setTextColor(23, 183, 77);
+            doc.text(`Informe de Candidato`, doc.internal.pageSize.width / 2, y, { align: 'center' });
+            y += 8;
+            doc.setFontSize(16);
+            doc.setTextColor(31, 41, 55);
+            doc.text(data.nombre || 'Nombre no disponible', doc.internal.pageSize.width / 2, y, { align: 'center' });
+            y += 15;
+            
+            // Puntuación y justificación
+            addTitle("Puntuación y Justificación");
+            addText("Puntuación Total", data.score ? data.score.toString() : '--');
+            y += 2;
+            addText("Puntuación Formación", (data.score_formacion * 10).toFixed(0));
+            addText("Puntuación Experiencia", (data.score_experiencia * 10).toFixed(0));
+            addText("Puntuación Soft Skills", (data.score_soft_skill * 10).toFixed(0));
+            addText("Puntuación Hard Skills", (data.score_hard_skill * 10).toFixed(0));
+            y += 5;
+
+
+            if (data.justificacion && data.justificacion.length > 0) {
+                 checkPageBreak(8);
+                 doc.setFont('helvetica', 'bold');
+                 doc.setFontSize(10);
+                 doc.setTextColor(55, 65, 81);
+                 doc.text("Justificaciones de Evaluadores:", margin, y);
+                 y += 6;
+                 
+                 data.justificacion.forEach(j => {
+                    checkPageBreak(12); // Estimate height
+                    doc.setFont('helvetica', 'bold');
+                    doc.text(`${j.evaluador}:`, margin, y);
+                    y += 5;
+                    
+                    doc.setFont('helvetica', 'normal');
+                    const splitText = doc.splitTextToSize(j.texto, maxWidth);
+                    checkPageBreak(splitText.length * 4 + 2);
+                    doc.text(splitText, margin, y);
+                    y += (splitText.length * 4) + 4;
+                 });
+            }
+            y += 5;
+
+            // Datos personales
+            addTitle("Datos Personales");
+            addText("Email", data.email);
+            addText("Teléfono", data.telefono);
+            addText("Fecha de nacimiento", data.fecha_nacimiento);
+            addText("Ciudad", data.ciudad);
+            addText("LinkedIn", data.linkedin);
+            y += 5;
+
+            // Formación
+            addTitle("Formación Académica y Otra Formación");
+            if (data.formacion && data.formacion.length > 0) {
+                data.formacion.forEach((item, index) => {
+                    const blockHeight = 28; // Estimate
+                    checkPageBreak(blockHeight);
+                    const startY = y;
+                    doc.setFillColor(255, 255, 255); // gray-50
+                    doc.rect(margin - 2, startY - 5, maxWidth + 4, blockHeight - 2, 'F');
+                    addText("Nombre", item.nombre_formacion);
+                    addText("Centro", item.centro_estudios);
+                    addText("Año Finalización", item.año_finalizacion);
+                    if (index < data.formacion.length - 1) y += 5;
+                });
+            } else { addParagraph(SIN_INFO); }
+            y += 4; // Space before Miscelanea
+            addText("Miscelánea", data.miscelanea_formacion);
+            y += 5;
+
+            // Referencias
+            addTitle("Referencias");
+            addText("Internas", data.ref_internas);
+            addText("Externas", data.ref_externas);
+            y += 5;
+
+            // Trayectoria
+            addTitle("Trayectoria Profesional");
+             if (data.trayectoria_profesional && data.trayectoria_profesional.length > 0) {
+                data.trayectoria_profesional.forEach((item, index) => {
+                    const blockHeight = 40; // Estimate
+                    checkPageBreak(blockHeight);
+                    const startY = y;
+                    doc.setFillColor(255, 255, 255);
+                    doc.rect(margin - 2, startY - 5, maxWidth + 4, blockHeight - 2, 'F');
+                    addText("Puesto", item.puesto);
+                    addText("Empresa", item.empresa);
+                    addText("Fechas", `${item.fecha_inicio || ''} - ${item.fecha_fin || ''}`);
+                    addText("Descripción", item.descripcion_puesto);
+                     if (index < data.trayectoria_profesional.length - 1) y += 5;
+                });
+            } else { addParagraph(SIN_INFO); }
+            y+=5;
+            
+            // Valoración y Observaciones
+            addTitle("Valoración Perfil Competencial");
+            addParagraph(data.valoracion_perfil);
+            y += 5;
+            addTitle("Observaciones");
+            addParagraph(data.observaciones);
+            y += 5;
+
+            // Competencias
+            addTitle("Evaluación de Competencias");
+             if (data.idiomas && data.idiomas.length > 0) {
+                 doc.setFont('helvetica', 'bold');
+                 doc.setFontSize(11);
+                 doc.text("Idiomas:", margin, y);
+                 y += 8;
+                data.idiomas.forEach((item, index) => {
+                    const blockHeight = 18; // Estimate
+                    checkPageBreak(blockHeight);
+                    const startY = y;
+                    doc.setFillColor(255, 255, 255);
+                    doc.rect(margin - 2, startY - 5, maxWidth + 4, blockHeight - 2, 'F');
+                    addText("Idioma", item.idioma);
+                    addText("Nivel", item.nivel);
+                     if (index < data.idiomas.length - 1) y += 5;
+                });
+            } else { addText("Idiomas", SIN_INFO); }
+            y += 6;
+            
+            // Skills en dos columnas
+            const col1_x = margin;
+            const col2_x = margin + (maxWidth / 2) + 5;
+            const colWidth = (maxWidth / 2) - 5;
+            
+            const softSkillsHeight = 6 + (data.soft_skills?.length || 1) * 6;
+            const hardSkillsHeight = 6 + (data.hard_skills?.length || 1) * 6;
+            checkPageBreak(Math.max(softSkillsHeight, hardSkillsHeight));
+
+            let y1 = y;
+            let y2 = y;
+
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(11);
+            doc.text("Soft Skills", col1_x, y1); y1 += 6;
+            if(data.soft_skills && data.soft_skills.length > 0){
+                data.soft_skills.forEach(skill => {
+                    doc.setFont('helvetica', 'normal'); doc.setFontSize(10);
+                    doc.text(`${skill.SOFT_SKILL}:`, col1_x, y1);
+                    doc.setFont('helvetica', 'bold'); doc.setTextColor(22, 163, 74);
+                    doc.text(skill.VALORACION || 'N/A', col1_x + colWidth, y1, { align: 'right' });
+                    doc.setTextColor(17, 24, 39); y1 += 6;
+                });
+            } else { doc.setFont('helvetica', 'normal'); doc.text(SIN_INFO, col1_x, y1); y1 += 6; }
+
+            doc.setFont('helvetica', 'bold'); doc.setFontSize(11);
+            doc.text("Hard Skills", col2_x, y2); y2 += 6;
+            if(data.hard_skills && data.hard_skills.length > 0){
+                data.hard_skills.forEach(skill => {
+                    doc.setFont('helvetica', 'normal'); doc.setFontSize(10);
+                    doc.text(`${skill.HARD_SKILL}:`, col2_x, y2);
+                    doc.setFont('helvetica', 'bold'); doc.setTextColor(22, 163, 74);
+                    doc.text(skill.VALORACION || 'N/A', col2_x + colWidth, y2, { align: 'right' });
+                    doc.setTextColor(17, 24, 39); y2 += 6;
+                });
+            } else { doc.setFont('helvetica', 'normal'); doc.text(SIN_INFO, col2_x, y2); y2 += 6; }
+
+            y = Math.max(y1, y2) + 10;
+
+            // Preguntas para la entrevista
+            addTitle("Preguntas para la entrevista");
+            const preguntas = data.preguntas_entrevista;
+            if (preguntas && (preguntas.tecnicas?.length || preguntas.rrhh?.length || preguntas.manager?.length)) {
+                const addQuestions = (evaluador, questions) => {
+                     if(questions && questions.length > 0){
+                        checkPageBreak(10 + questions.length * 5);
+                        doc.setFont('helvetica', 'bold'); doc.setFontSize(11); doc.setTextColor(55, 65, 81);
+                        doc.text(evaluador, margin, y); y+=6;
+                        doc.setFont('helvetica', 'normal'); doc.setFontSize(10); doc.setTextColor(17, 24, 39);
+                        questions.forEach(q => {
+                           const splitQ = doc.splitTextToSize(q, maxWidth - 5);
+                           checkPageBreak(splitQ.length * 5 + 2);
+                           doc.text("•", margin, y, { baseline: 'top' });
+                           doc.text(splitQ, margin + 5, y, { baseline: 'top' });
+                           y += (splitQ.length * 5) + 2;
+                        });
+                        y+=4;
+                     }
+                }
+                addQuestions('Evaluador 1', preguntas.tecnicas);
+                addQuestions('Evaluador 2', preguntas.rrhh);
+                addQuestions('Evaluador 3', preguntas.manager);
+
+            } else { addParagraph(SIN_INFO); }
+
+            doc.save(`Informe-${data.nombre.replace(/\s/g, '_')}.pdf`);
+        };
+        document.getElementById('export-pdf-btn').addEventListener('click', exportReportToPDF);
+
+        // --- Event Listeners and Logic ---
+        puestoForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const ponderacionesContainer = document.getElementById('new-puesto-ponderaciones-container');
+            const sliders = ponderacionesContainer.querySelectorAll('input[type="range"]');
+            
+            const puestoData = {
+                puesto: document.getElementById('puesto-nombre').value,
+                descripcion_corta: document.getElementById('puesto-descripcion-corta').value,
+                descripcion_larga: document.getElementById('puesto-descripcion-larga').value,
+                mision: document.getElementById('puesto-mision').value,
+                competencias: document.getElementById('puesto-competencias').value.split('\n').map(item => item.trim()).filter(Boolean),
+                pond_formacion: sliders[0].value / 100,
+                pond_experiencia: sliders[1].value / 100,
+                pond_soft_skill: sliders[2].value / 100,
+                pond_hard_skill: sliders[3].value / 100
+            };
+            
+            const isEditing = currentPuestoIdForEdit !== null;
+            const url = isEditing ? `${API_URL}/api/puesto/${encodeURIComponent(currentPuestoIdForEdit)}` : `${API_URL}/api/puestos`;
+            const method = isEditing ? 'PUT' : 'POST';
+
+            try {
+                const response = await fetch(url, {
+                    method: method, 
+                    headers: { 'Content-Type': 'application/json' }, 
+                    body: JSON.stringify(puestoData),
+                });
+                if (!response.ok) { 
+                    const errData = await response.json();
+                    throw new Error(errData.error || `Error: ${response.status}`); 
+                }
+                
+                closePuestoModal();
+                await renderPuestos();
+                alert(`Puesto ${isEditing ? 'actualizado' : 'creado'} con éxito`);
+
+            } catch (error) { 
+                console.error(`Error al ${isEditing ? 'actualizar' : 'crear'} el puesto:`, error);
+                alert(`No se pudo ${isEditing ? 'actualizar' : 'crear'} el puesto: ${error.message}`); 
+            } finally {
+                currentPuestoIdForEdit = null;
+            }
+        });
+
+        document.getElementById('puestos-list').addEventListener('click', async (e) => {
+            const abrirBtn = e.target.closest('.abrir-vacante-btn');
+            if (abrirBtn) {
+                const puestoId = abrirBtn.dataset.puestoId;
+                try {
+                    const response = await fetch(`${API_URL}/api/puesto/${encodeURIComponent(puestoId)}/vacante`, {
+                        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ vacante: 1 })
+                    });
+                    if (!response.ok) throw new Error('API Error');
+                    await fetchPuestos();
+                    renderPuestos();
+                    renderDashboard();
+                    alert('Vacante abierta con éxito.');
+                } catch (error) { console.error('Error al abrir vacante:', error); alert('No se pudo abrir la vacante.'); }
+            }
+
+            const editarBtn = e.target.closest('.editar-puesto-btn');
+            if (editarBtn) {
+                const puestoId = editarBtn.dataset.puestoId;
+                try {
+                    const response = await fetch(`${API_URL}/api/puesto/${encodeURIComponent(puestoId)}`);
+                    if (!response.ok) throw new Error('No se pudo cargar la información del puesto.');
+                    const puestoData = await response.json();
+                    
+                    currentPuestoIdForEdit = puestoId;
+                    
+                    document.getElementById('puesto-nombre').value = puestoData.PUESTO || '';
+                    document.getElementById('puesto-descripcion-corta').value = puestoData.DESCRIPCION_CORTA || '';
+                    document.getElementById('puesto-descripcion-larga').value = puestoData.DESCRIPCION_LARGA || '';
+                    document.getElementById('puesto-mision').value = puestoData.MISION || '';
+                    document.getElementById('puesto-competencias').value = Array.isArray(puestoData.COMPETENCIAS) ? puestoData.COMPETENCIAS.join('\n') : '';
+
+                    document.getElementById('modal-title').textContent = 'Editar Puesto';
+                    document.getElementById('toggle-ponderaciones-btn').style.display = 'none'; // Hide ponderations button on edit
+                    puestoModal.classList.replace('hidden', 'flex');
+
+                } catch (error) {
+                    console.error('Error al preparar la edición del puesto:', error);
+                    alert(error.message);
+                }
+            }
+
+            const ponderacionesBtn = e.target.closest('.ponderaciones-btn');
+            if(ponderacionesBtn) {
+                const puestoId = ponderacionesBtn.dataset.puestoId;
+                currentPuestoIdForPonderaciones = puestoId;
+                try {
+                    const response = await fetch(`${API_URL}/api/puesto/${encodeURIComponent(puestoId)}`);
+                    if (!response.ok) throw new Error('No se pudo cargar la información del puesto.');
+                    const puestoData = await response.json();
+
+                    document.getElementById('ponderaciones-modal-title').textContent = `Ponderaciones para "${puestoData.PUESTO}"`;
+                    
+                    const sliders = ponderacionesModal.querySelectorAll('input[type="range"]');
+                    sliders[0].value = (puestoData.POND_FORMACION || 0) * 100;
+                    sliders[1].value = (puestoData.POND_EXPERIENCIA || 0) * 100;
+                    sliders[2].value = (puestoData.POND_SOFT_SKILL || 0) * 100;
+                    sliders[3].value = (puestoData.POND_HARD_SKILL || 0) * 100;
+
+                    const spans = ponderacionesModal.querySelectorAll('span');
+                    spans[0].textContent = `${sliders[0].value}%`;
+                    spans[1].textContent = `${sliders[1].value}%`;
+                    spans[2].textContent = `${sliders[2].value}%`;
+                    spans[3].textContent = `${sliders[3].value}%`;
+                    
+                    ponderacionesModal.classList.replace('hidden', 'flex');
+
+                } catch (error) {
+                    console.error('Error al abrir ponderaciones:', error);
+                    alert(error.message);
+                }
+            }
+        });
+        
+        document.getElementById('vacantes-list').addEventListener('click', async e => {
+            const rankingBtn = e.target.closest('.ver-ranking-btn');
+            if (rankingBtn) {
+                renderVacanteDetail(rankingBtn.dataset.puestoId);
+                showView('vacanteDetail');
+            }
+            const cerrarBtn = e.target.closest('.cerrar-vacante-btn');
+            if (cerrarBtn) {
+                const puestoId = cerrarBtn.dataset.puestoId;
+                 try {
+                    const response = await fetch(`${API_URL}/api/puesto/${encodeURIComponent(puestoId)}/vacante`, {
+                        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ vacante: 0 })
+                    });
+                    if (!response.ok) throw new Error('API Error');
+                    await fetchPuestos();
+                    renderVacantes();
+                    renderDashboard();
+                    alert('Vacante cerrada con éxito.');
+                } catch (error) { console.error('Error al cerrar vacante:', error); alert('No se pudo cerrar la vacante.'); }
+            }
+        });
+
+        // --- MODIFICACIÓN: Listener de clic delegado para botones dinámicos ---
+        document.body.addEventListener('click', e => {
+            // Lógica existente para ver informe
+            const btn = e.target.closest('.ver-informe-btn');
+            if(btn){
+                renderCandidatoReport(parseInt(btn.dataset.candidatoId), btn.dataset.puestoId, btn.dataset.score);
+                showView('candidatoReport');
+            }
+            
+            // Lógica existente para borrar item
+            if (e.target.closest('.delete-btn')) {
+                e.target.closest('.dynamic-item').remove();
+            }
+
+            // --- LÓGICA MOVIDA AQUÍ ---
+            // Nueva lógica para botones "Añadir" usando delegación
+            if (e.target.closest('#add-formacion-btn')) {
+                handleAddItemClick('report-formacion-container', createFormacionItem);
+            }
+            if (e.target.closest('#add-trayectoria-btn')) {
+                handleAddItemClick('report-trayectoria-container', createTrayectoriaItem);
+            }
+            if (e.target.closest('#add-idioma-btn')) {
+                handleAddItemClick('report-idiomas-container', createIdiomaItem);
+            }
+            // --- FIN DE LA MODIFICACIÓN ---
+        });
+        
+        // --- MODIFICACIÓN: Eliminar listeners directos que se pierden ---
+        /*
+        document.getElementById('add-formacion-btn').addEventListener('click', () => { 
+            handleAddItemClick('report-formacion-container', createFormacionItem); 
+        });
+        document.getElementById('add-trayectoria-btn').addEventListener('click', () => { 
+            handleAddItemClick('report-trayectoria-container', createTrayectoriaItem); 
+        });
+        document.getElementById('add-idioma-btn').addEventListener('click', () => { 
+            handleAddItemClick('report-idiomas-container', createIdiomaItem); 
+        });
+        */
+        // --- FIN DE LA MODIFICACIÓN ---
+
+        document.getElementById('save-candidato-report').addEventListener('click', async () => {
+             const getDynamicListData = (containerId) => {
+                return [...document.getElementById(containerId).querySelectorAll('.dynamic-item')].map(item => {
+                    const obj = {};
+                    item.querySelectorAll('input, textarea').forEach(input => { obj[input.dataset.key] = input.value; });
+                    return obj;
+                });
+            };
+            const getSkillsData = (containerId) => {
+                return [...document.getElementById(containerId).querySelectorAll('[data-skill-id]')].map(item => ({
+                    ID_SOFT_SKILL: item.dataset.skillType === 'soft' ? item.dataset.skillId : null,
+                    ID_HARD_SKILL: item.dataset.skillType === 'hard' ? item.dataset.skillId : null,
+                    VALORACION: item.querySelector('input:checked')?.value || null
+                })).filter(s => s.VALORACION);
+            };
+
+            const payload = {
+                apto: document.getElementById('report-apto').value,
+                personal: {
+                    nombre: document.getElementById('report-nombre').value,
+                    email: document.getElementById('report-email').value,
+                    telefono: document.getElementById('report-telefono').value,
+                    fecha_nacimiento: document.getElementById('report-nacimiento').value || null,
+                    ciudad: document.getElementById('report-ciudad').value,
+                    linkedin: document.getElementById('report-linkedin').value,
+                    ref_internas: document.getElementById('report-ref-internas').value,
+                    ref_externas: document.getElementById('report-ref-externas').value,
+                    formacion: getDynamicListData('report-formacion-container'),
+                    trayectoria_profesional: getDynamicListData('report-trayectoria-container'),
+                    idiomas: getDynamicListData('report-idiomas-container'),
+                    miscelanea: document.getElementById('report-miscelanea').value
+                },
+                otros_puesto: {
+                    valoracion_perfil: document.getElementById('report-valoracion-competencial').value,
+                    observaciones: document.getElementById('report-observaciones').value,
+                },
+                soft_skills: getSkillsData('report-soft-skills-container'),
+                hard_skills: getSkillsData('report-hard-skills-container')
+            };
+            
+            try {
+                const response = await fetch(`${API_URL}/api/candidato/${currentCandidatoId}/reporte/${encodeURIComponent(currentPuestoIdForDetail)}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                if (!response.ok) {
+                    const err = await response.json();
+                    throw new Error(err.error || 'Error del servidor');
+                }
+                alert('Informe guardado con éxito.');
+            } catch (error) {
+                console.error('Error al guardar el informe:', error);
+                alert(`No se pudo guardar el informe: ${error.message}`);
+            }
+        });
+        
+        // --- Ponderations Logic ---
+        function setupPonderations(containerSelector) {
+            const container = document.querySelector(containerSelector);
+            const sliders = Array.from(container.querySelectorAll('input[type="range"]'));
+            const spans = Array.from(container.querySelectorAll('span'));
+            
+            let oldValues = sliders.map(s => parseInt(s.value));
+
+            sliders.forEach((slider, index) => {
+                slider.addEventListener('input', (e) => {
+                    const changedSliderIndex = index;
+                    const newValue = parseInt(e.target.value);
+                    const oldValue = oldValues[changedSliderIndex];
+                    let diff = newValue - oldValue;
+                    
+                    let newValues = [...oldValues];
+                    newValues[changedSliderIndex] = newValue;
+
+                    let remainingDiff = -diff;
+                    let adjustableSliders = sliders.map((s, i) => i).filter(i => i !== changedSliderIndex);
+
+                    // Distribute the difference
+                    for(let i = 0; i < adjustableSliders.length; i++) {
+                        const sliderIndex = adjustableSliders[i];
+                        if (remainingDiff > 0) { // Need to add
+                           const canAdd = 100 - newValues[sliderIndex];
+                           const toAdd = Math.min(remainingDiff, canAdd);
+                           newValues[sliderIndex] += toAdd;
+                           remainingDiff -= toAdd;
+                        } else if (remainingDiff < 0) { // Need to subtract
+                           const canSubtract = newValues[sliderIndex];
+                           const toSubtract = Math.min(Math.abs(remainingDiff), canSubtract);
+                           newValues[sliderIndex] -= toSubtract;
+                           remainingDiff += toSubtract;
+                        }
+                    }
+                    
+                    // Correction pass for rounding issues or if distribution was not perfect
+                    let currentSum = newValues.reduce((a, b) => a + b, 0);
+                    let sumDiff = 100 - currentSum;
+
+                    while (sumDiff !== 0) {
+                        for(let i = 0; i < adjustableSliders.length && sumDiff !== 0; i++) {
+                            let sliderIndex = adjustableSliders[i];
+                             if (sumDiff > 0 && newValues[sliderIndex] < 100) {
+                                newValues[sliderIndex]++;
+                                sumDiff--;
+                            } else if (sumDiff < 0 && newValues[sliderIndex] > 0) {
+                                newValues[sliderIndex]--;
+                                sumDiff++;
+                            }
+                        }
+                    }
+                    
+                    // Update UI
+                    sliders.forEach((s, i) => {
+                        s.value = newValues[i];
+                        spans[i].textContent = `${newValues[i]}%`;
+                    });
+                    
+                    oldValues = newValues;
+                });
+            });
+        }
+
+        setupPonderations('#new-puesto-ponderaciones-container .ponderations-wrapper');
+        setupPonderations('#ponderaciones-modal .ponderations-wrapper');
+
+        document.getElementById('ponderaciones-modal-save-btn').addEventListener('click', async () => {
+            const sliders = ponderacionesModal.querySelectorAll('input[type="range"]');
+            const payload = {
+                pond_formacion: sliders[0].value / 100,
+                pond_experiencia: sliders[1].value / 100,
+                pond_soft_skill: sliders[2].value / 100,
+                pond_hard_skill: sliders[3].value / 100,
+            };
+
+            try {
+                const response = await fetch(`${API_URL}/api/puesto/${encodeURIComponent(currentPuestoIdForPonderaciones)}/ponderaciones`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                if(!response.ok) {
+                    const err = await response.json();
+                    throw new Error(err.error || 'Error del servidor');
+                }
+                alert('Ponderaciones guardadas con éxito.');
+                closePonderacionesModal();
+            } catch(error) {
+                console.error('Error al guardar ponderaciones:', error);
+                alert(`No se pudieron guardar las ponderaciones: ${error.message}`);
+            }
+        });
+
+        // --- Initial Render ---
+        renderDashboard();
+    });
+    </script>
+</body>
+</html>
+

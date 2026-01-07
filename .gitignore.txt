@@ -1,0 +1,17 @@
+# Entorno virtual
+venv/
+env/
+__pycache__/
+*.pyc
+
+# Variables de entorno (¡MUY IMPORTANTE!)
+.env
+
+# Archivos de base de datos local y logs
+*.log
+*.sql
+*.db
+
+# Archivos temporales de VS Code o SO
+.vscode/
+.DS_Store
