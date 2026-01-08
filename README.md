@@ -18,7 +18,48 @@ El proyecto implementa un flujo de datos estructurado en 4 etapas críticas:
     * Hard Skills (25%)
     * Soft Skills (25%)
 4.  **Panel de Control (WebApp)**: Interfaz intuitiva para técnicos de RRHH que permite la gestión de vacantes, visualización de rankings y exportación de informes detallados en PDF.
+graph TD
+    %% Estilos de Nodos (Estilo Google Cloud)
+    classDef frontend fill:#4285F4,stroke:#3b78e7,color:#fff,font-weight:bold
+    classDef backend fill:#34A853,stroke:#2d9249,color:#fff,font-weight:bold
+    classDef ai fill:#FBBC05,stroke:#f2a600,color:#202124,font-weight:bold
+    classDef database fill:#EA4335,stroke:#d33828,color:#fff,font-weight:bold
+    classDef logic fill:#f1f3f4,stroke:#dadce0,color:#202124,font-style:italic
 
+    subgraph Client_Tier [Capa de Presentación]
+        A[CVision.html <br/> UI Dinámica - Tailwind CSS]:::frontend
+    end
+
+    subgraph App_Tier [Capa de Aplicación - Flask]
+        B[app.py <br/> API REST Server]:::backend
+        C[utils.py <br/> Orquestador de Lógica]:::backend
+        
+        subgraph Async_Engine [Motor de Concurrencia]
+            D{asyncio.Semaphore <br/> N=70}:::logic
+        end
+    end
+
+    subgraph AI_Services [Capa de Inteligencia Artificial]
+        E[Google Gemini Pro API <br/> Modelos de Lenguaje]:::ai
+        F[Anonimizador de Datos <br/> Filtro PII / RGPD]:::ai
+    end
+
+    subgraph Data_Tier [Capa de Datos]
+        G[(MySQL Database <br/> Local/Cloud)]:::database
+        H[Repositorio CVs <br/> PDF / DOCX]:::database
+    end
+
+    %% Flujo de ejecución detallado
+    A -- "1. Trigger: Clic Actualizar" --> B
+    B -- "2. Llamada asíncrona" --> C
+    C -- "3. Lectura de binarios" --> H
+    C -- "4. Limpieza RGPD" --> F
+    F -- "5. Prompt Contextualizado" --> D
+    D -- "6. Peticiones Paralelas" --> E
+    E -- "7. JSON Scoring" --> D
+    D -- "8. Consolidación" --> C
+    C -- "9. SQL Update / Insert" --> G
+    G -- "10. Ranking Actualizado" --> A
 ## 🛠️ Stack Tecnológico
 * **Lenguaje**: Python 3.x
 * **Backend**: Flask (con soporte asíncrono para procesamiento paralelo).
