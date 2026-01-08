@@ -18,7 +18,7 @@ El proyecto implementa un flujo de datos estructurado en 4 etapas críticas:
     * Hard Skills (25%)
     * Soft Skills (25%)
 4.  **Panel de Control (WebApp)**: Interfaz intuitiva para técnicos de RRHH que permite la gestión de vacantes, visualización de rankings y exportación de informes detallados en PDF.
-![Arquitectura del Proyecto](Arquitectura_CVision.png)
+![Arquitectura del Proyecto](CVision/Arquitectura_CVision.png)
 
 ## 🛠️ Stack Tecnológico
 * **Lenguaje**: Python 3.x
