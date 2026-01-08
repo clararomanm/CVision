@@ -1,139 +1,189 @@
-# CVision – AI-powered Candidate Evaluation Platform
+# CVision — Plataforma Inteligente de Evaluación de Candidatos con IA
 
-CVision es una aplicación web **full-stack** diseñada para asistir en procesos de selección mediante **evaluación automatizada de candidatos con modelos de lenguaje (LLMs)**.  
-El sistema combina criterios técnicos, de RRHH y de negocio de forma estructurada, explicable y auditable.
+CVision es una plataforma de apoyo al proceso de selección de personal basada en Inteligencia Artificial, diseñada para **automatizar la ingestión, anonimización, evaluación y visualización de currículums vitae (CVs)**, manteniendo siempre el **control humano** en la toma de decisiones y cumpliendo con los principios de **IA responsable y privacidad por diseño**.
 
-El objetivo no es sustituir al recruiter, sino **reducir el trabajo manual y repetitivo**, mejorar la consistencia de las evaluaciones y generar información accionable (scoring, justificaciones y preguntas de entrevista).
-
----
-
-## 🎯 Problema que resuelve
-
-En muchos procesos de selección:
-
-- La revisión de CVs es manual y poco escalable  
-- Los criterios de evaluación varían entre evaluadores  
-- Es difícil justificar por qué un candidato obtiene cierta puntuación  
-- Se invierte mucho tiempo en generar preguntas de entrevista personalizadas  
-
-CVision aborda este problema mediante un **motor de evaluación asistido por IA**, manteniendo siempre el control humano sobre las decisiones finales.
+El proyecto se ha desarrollado como un **Producto Mínimo Viable (PMV)** con una arquitectura modular, escalable y orientada a un entorno empresarial real.
 
 ---
 
-## 🧠 Enfoque y principios de diseño
+## 📌 Problema que aborda
 
-El proyecto está diseñado con criterios **enterprise y de IA responsable**:
+Los procesos tradicionales de selección presentan varios retos:
 
-- La IA **asiste**, no toma decisiones finales  
-- Todas las evaluaciones incluyen **justificaciones explícitas**  
-- Separación clara de responsabilidades:
-  - Frontend
-  - API
-  - Lógica de negocio
-  - Persistencia
-  - Integración con LLMs
-- Uso de prompts estructurados y respuestas en JSON
-- Preparado para evolucionar hacia arquitecturas multiagente
+- Cribado manual de CVs costoso en tiempo
+- Evaluaciones iniciales subjetivas
+- Riesgo de sesgos inconscientes
+- Gestión de información altamente sensible
+- Falta de trazabilidad en las decisiones
 
----
-
-## 🏗️ Arquitectura de la solución
-
-La aplicación sigue una arquitectura por capas claramente definida:
-
-### 1. Frontend Web
-- HTML, CSS y JavaScript
-- Interfaz ligera tipo SPA
-- Gestión de puestos y candidatos
-- Visualización de rankings y resultados
-- Exportación de informes a PDF
-
-**Archivo principal**
-- `CVision.html`
+CVision aborda estos problemas mediante:
+- Automatización del procesamiento de CVs
+- Separación estricta entre datos personales y datos evaluables
+- Scoring asistido por IA (no decisional)
+- Centralización del flujo de selección en una aplicación web
 
 ---
 
-### 2. Backend – API REST
-- Implementado en **Flask**
-- Expone endpoints REST consumidos por el frontend
-- Orquesta el flujo completo de evaluación
+## 🧠 Visión general de la solución
 
-**Archivo principal**
-- `app.py`
+CVision implementa un **pipeline de datos y evaluación con IA** que permite:
 
----
-
-### 3. Motor de Evaluación (Core)
-- Lógica central del sistema
-- Evaluación concurrente de candidatos
-- Simulación de distintos perfiles evaluadores (técnico, RRHH, manager)
-- Normalización y consolidación de puntuaciones
-- Generación de:
-  - Scoring final
-  - Justificaciones detalladas
-  - Preguntas de entrevista personalizadas
-
-**Archivo principal**
-- `utils.py`
+1. Extraer información estructurada de CVs en múltiples formatos  
+2. Anonimizar los datos personales antes de cualquier análisis con IA  
+3. Almacenar la información en una base de datos relacional  
+4. Comparar perfiles de candidatos con vacantes abiertas mediante LLMs  
+5. Mostrar rankings e informes detallados en una aplicación web para RRHH  
 
 ---
 
-### 4. Capa de Inteligencia Artificial
-- Integración con modelos LLM:
-  - Google Gemini
-  - OpenAI (opcional)
-- Prompts altamente estructurados
-- Respuestas forzadas en JSON para robustez y trazabilidad
-- Uso de la IA como **motor de análisis**, no como caja negra creativa
+## 🏗️ Arquitectura del sistema
 
----
+La siguiente imagen resume la arquitectura completa de la solución:
 
-### 5. Persistencia de Datos
-- Base de datos MySQL
-- Almacenamiento de:
-  - Candidatos
-  - Puestos
-  - Evaluaciones
-  - Puntuaciones históricas
-- Permite trazabilidad, auditoría y re-evaluación
-
----
-
-## 📐 Diagrama de arquitectura
 ![Arquitectura del Proyecto](arquitectura_CVision.png)
 
 ---
 
-## ⚙️ Tecnologías utilizadas
+## 🔄 Pipeline de procesamiento de CVs
 
-- **Backend:** Python, Flask  
-- **Frontend:** HTML, CSS, JavaScript  
-- **Base de datos:** MySQL  
-- **IA / LLMs:** Google Gemini, OpenAI  
-- **Otros:** AsyncIO, REST APIs, JSON, TailwindCSS  
+### 1. Ingesta y extracción de datos
+- Activación manual por parte del personal de RRHH
+- Lectura de CVs desde un repositorio en la nube
+- Formatos soportados: PDF, DOC, DOCX, TXT
+- Conversión a texto plano:
+  - **PDF**: PyMuPDF (extracción en memoria)
+  - **DOC/DOCX**: LibreOffice (archivos temporales eliminados tras uso)
+
+### 2. Procesamiento mediante LLM local
+- Envío del texto del CV a un LLM ejecutado en entorno local
+- Extracción de entidades relevantes:
+  - Datos personales
+  - Experiencia profesional
+  - Formación académica
+  - Competencias técnicas y soft skills
+- Salida estructurada en formato JSON (en memoria)
 
 ---
 
-## 🚀 Ejecución local
+## 🔐 Anonimización y privacidad
 
-1. Instalar dependencias:
-```bash
-pip install -r requirements.txt
-```
-2. Configurar variables del entorno:
-```bash
-DB_HOST
-DB_NAME
-DB_USER
-DB_PASSWORD
-GEMINI_API_KEY
-OPENAI_API_KEY   # opcional
-```
-3. Ejecutar la aplicación:
-```bash
-python app.py
-```
-4. Acceder desde el navegador:
-```bash
-http://localhost:5000
-```
+La anonimización es un pilar fundamental del sistema:
+
+- Eliminación de:
+  - Nombre
+  - Dirección
+  - Email
+  - Teléfono
+- Cumplimiento de:
+  - RGPD
+  - LOPDGDD
+- Separación clara entre:
+  - **Datos personales** (columnas relacionales)
+  - **Datos anonimizados** (JSON almacenado en el campo `Otros`)
+
+Los modelos externos **solo consumen información anonimizada**.
+
+---
+
+## 🗄️ Tabulación y almacenamiento
+
+Una vez finalizada la extracción y anonimización:
+
+- Conexión a base de datos relacional (Amazon RDS)
+- Generación de dos representaciones:
+  - **CSV tabular** (datos personales + JSON en columna `Otros`)
+  - **JSON anonimizado** (experiencia, formación, skills)
+- Garantía de trazabilidad y coherencia entre datos personales y evaluables
+
+---
+
+## 🧪 Proceso de Scoring con IA
+
+### Fuentes de datos
+- **Candidatos**: información anonimizada desde CSV / base de datos
+- **Vacantes abiertas**: requisitos del puesto en formato JSON
+
+### Evaluación con LLM (Gemini AI)
+Para cada par Candidato–Vacante:
+- Se envía el JSON del candidato + JSON de la vacante
+- El modelo simula tres perfiles evaluadores:
+  - Evaluador técnico
+  - Evaluador de RRHH
+  - Manager neutral
+- Se evalúan cuatro dimensiones:
+  - Experiencia profesional
+  - Formación académica
+  - Hard skills
+  - Soft skills
+
+### Resultado
+- Puntuación global (0–100)
+- Justificación sintética
+- Evaluación de habilidades (escala A–D)
+- Pesos configurables por RRHH
+- Persistencia en base de datos y CSV histórico (`dataset_ranking.csv`)
+
+> La IA **no decide**. Solo prioriza y justifica.
+
+---
+
+## 🖥️ Aplicación web de RRHH
+
+La aplicación web centraliza todo el flujo de selección:
+
+### Módulos principales
+- **Dashboard**: métricas globales y guía de uso
+- **Gestión de Puestos**: creación de plantillas de rol
+- **Centro de Vacantes**: apertura y cierre de procesos
+- **Ranking de Candidatos**: Top 5 y lista completa
+- **Informe de Candidato**: evaluación detallada y editable
+
+---
+
+## 📄 Informe de RRHH
+
+Cada candidato dispone de un informe completo con:
+
+- Decisión manual: ¿Apto para entrevista? (Sí / No)
+- Puntuación global y justificaciones
+- Datos personales
+- Formación académica
+- Trayectoria profesional
+- Evaluación de competencias
+- Observaciones internas
+- Preguntas sugeridas para entrevista
+- Exportación a PDF
+- Sincronización con base de datos
+
+El juicio humano **prevalece siempre** sobre la evaluación automática.
+
+---
+
+## 🛠️ Tecnologías utilizadas
+
+- **Backend**: Python
+- **Modelos de lenguaje**:
+  - LLM local (extracción y anonimización)
+  - Gemini AI (scoring con datos anonimizados)
+- **Base de datos**: Amazon RDS
+- **Frontend**: HTML / Web App
+- **Procesamiento de documentos**:
+  - PyMuPDF
+  - LibreOffice
+- **Formatos de datos**: JSON, CSV
+
+---
+
+## 🚀 Evolución futura
+
+- Ingesta automática y en tiempo real
+- Sistemas de colas (SQS / RabbitMQ)
+- OCR para CVs escaneados
+- Control de duplicados y versionado
+- Chat inteligente para RRHH
+- API REST para integraciones externas
+- Integración con BI (Power BI, Tableau)
+- Conexión con ATS corporativos
+
+---
+
