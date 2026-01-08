@@ -2,7 +2,7 @@
 
 CVision es una plataforma de apoyo al proceso de selección de personal basada en Inteligencia Artificial, diseñada para **automatizar la ingestión, anonimización, evaluación y visualización de currículums vitae (CVs)**, manteniendo siempre el **control humano** en la toma de decisiones y cumpliendo con los principios de **IA responsable y privacidad por diseño**.
 
-El proyecto se ha desarrollado como un **Producto Mínimo Viable (PMV)** con una arquitectura modular, escalable y orientada a un entorno empresarial real.
+El proyecto se ha desarrollado como un **Producto Mínimo Viable (PMV)** con una arquitectura, escalable y orientada a un entorno empresarial real.
 
 ---
 
