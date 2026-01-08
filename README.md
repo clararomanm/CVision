@@ -1,193 +1,121 @@
-CVision – AI-powered Candidate Evaluation Platform
+# CVision – AI-powered Candidate Evaluation Platform
 
-CVision es una aplicación web full-stack que utiliza modelos de lenguaje (LLMs) para asistir en la evaluación de candidatos en procesos de selección, combinando criterios técnicos, de RRHH y de negocio de forma estructurada, auditable y reproducible.
+CVision es una aplicación web **full-stack** diseñada para asistir en procesos de selección mediante **evaluación automatizada de candidatos con modelos de lenguaje (LLMs)**.  
+El sistema combina criterios técnicos, de RRHH y de negocio de forma estructurada, explicable y auditable.
 
-El objetivo no es sustituir al recruiter, sino reducir el trabajo manual y repetitivo, mejorar la consistencia de las evaluaciones y generar información accionable (scoring, justificaciones y preguntas de entrevista).
+El objetivo no es sustituir al recruiter, sino **reducir el trabajo manual y repetitivo**, mejorar la consistencia de las evaluaciones y generar información accionable (scoring, justificaciones y preguntas de entrevista).
 
-🎯 Problema que resuelve
+---
+
+## 🎯 Problema que resuelve
 
 En muchos procesos de selección:
 
-La evaluación de CVs es manual y poco escalable
+- La revisión de CVs es manual y poco escalable  
+- Los criterios de evaluación varían entre evaluadores  
+- Es difícil justificar por qué un candidato obtiene cierta puntuación  
+- Se invierte mucho tiempo en generar preguntas de entrevista personalizadas  
 
-Los criterios cambian según el evaluador
+CVision aborda este problema mediante un **motor de evaluación asistido por IA**, manteniendo siempre el control humano sobre las decisiones finales.
 
-Es difícil justificar por qué un candidato obtiene cierta puntuación
+---
 
-Se pierde mucho tiempo generando preguntas de entrevista personalizadas
+## 🧠 Enfoque y principios de diseño
 
-CVision aborda este problema mediante un motor de evaluación asistido por IA, manteniendo siempre el control humano sobre las decisiones finales.
+El proyecto está diseñado con criterios **enterprise y de IA responsable**:
 
-🧠 Enfoque y principios de diseño
+- La IA **asiste**, no toma decisiones finales  
+- Todas las evaluaciones incluyen **justificaciones explícitas**  
+- Separación clara de responsabilidades:
+  - Frontend
+  - API
+  - Lógica de negocio
+  - Persistencia
+  - Integración con LLMs
+- Uso de prompts estructurados y respuestas en JSON
+- Preparado para evolucionar hacia arquitecturas multiagente
 
-Este proyecto está diseñado con criterios enterprise y responsables:
+---
 
-La IA asiste, no decide de forma autónoma
+## 🏗️ Arquitectura de la solución
 
-Las evaluaciones son explicables y trazables
+La aplicación sigue una arquitectura por capas claramente definida:
 
-Separación clara entre:
+### 1. Frontend Web
+- HTML, CSS y JavaScript
+- Interfaz ligera tipo SPA
+- Gestión de puestos y candidatos
+- Visualización de rankings y resultados
+- Exportación de informes a PDF
 
-Interfaz
+**Archivo principal**
+- `CVision.html`
 
-API
+---
 
-Lógica de negocio
+### 2. Backend – API REST
+- Implementado en **Flask**
+- Expone endpoints REST consumidos por el frontend
+- Orquesta el flujo completo de evaluación
 
-Persistencia
+**Archivo principal**
+- `app.py`
 
-Modelos de IA
+---
 
-Uso de prompts estructurados y respuestas en JSON
+### 3. Motor de Evaluación (Core)
+- Lógica central del sistema
+- Evaluación concurrente de candidatos
+- Simulación de distintos perfiles evaluadores (técnico, RRHH, manager)
+- Normalización y consolidación de puntuaciones
+- Generación de:
+  - Scoring final
+  - Justificaciones detalladas
+  - Preguntas de entrevista personalizadas
 
-Pensado para escalar y evolucionar hacia arquitecturas multiagente
+**Archivo principal**
+- `utils.py`
 
-🏗️ Arquitectura de la solución
+---
 
-La solución sigue una arquitectura por capas claramente definida:
+### 4. Capa de Inteligencia Artificial
+- Integración con modelos LLM:
+  - Google Gemini
+  - OpenAI (opcional)
+- Prompts altamente estructurados
+- Respuestas forzadas en JSON para robustez y trazabilidad
+- Uso de la IA como **motor de análisis**, no como caja negra creativa
 
-1. Frontend Web
+---
 
-HTML / CSS / JavaScript
+### 5. Persistencia de Datos
+- Base de datos MySQL
+- Almacenamiento de:
+  - Candidatos
+  - Puestos
+  - Evaluaciones
+  - Puntuaciones históricas
+- Permite trazabilidad, auditoría y re-evaluación
 
-Interfaz ligera tipo SPA
+---
 
-Gestión de puestos y candidatos
-
-Visualización de rankings y resultados
-
-Exportación de informes a PDF
-
-Archivo principal:
-
-CVision.html
-
-2. Backend – API REST
-
-Implementado en Flask
-
-Expone endpoints REST para el frontend
-
-Orquesta el flujo de evaluación completo
-
-Archivo principal:
-
-app.py
-
-3. Motor de Evaluación (Core)
-
-Lógica central del sistema
-
-Evaluación concurrente de candidatos
-
-Simulación de distintos perfiles evaluadores
-
-Normalización y consolidación de resultados
-
-Generación de:
-
-Puntuaciones
-
-Justificaciones
-
-Preguntas de entrevista
-
-Archivo principal:
-
-utils.py
-
-4. Capa de Inteligencia Artificial
-
-Integración con modelos LLM:
-
-Google Gemini
-
-OpenAI (opcional)
-
-Uso de prompts estructurados
-
-Respuestas forzadas en JSON para robustez
-
-IA utilizada como motor de análisis, no como caja negra creativa
-
-5. Persistencia de Datos
-
-Base de datos MySQL
-
-Almacenamiento de:
-
-Candidatos
-
-Puestos
-
-Scoring
-
-Evaluaciones históricas
-
-Permite trazabilidad y re-evaluación
-
-📐 Diagrama de arquitectura
-
-El siguiente diagrama resume el flujo completo del sistema, desde la interacción del usuario hasta la evaluación asistida por IA y el almacenamiento de resultados:
+## 📐 Diagrama de arquitectura
 ![Arquitectura del Proyecto](arquitectura_CVision.png)
 
-⚙️ Tecnologías utilizadas
+---
 
-Backend: Python, Flask
+## ⚙️ Tecnologías utilizadas
 
-Frontend: HTML, CSS, JavaScript
+- **Backend:** Python, Flask  
+- **Frontend:** HTML, CSS, JavaScript  
+- **Base de datos:** MySQL  
+- **IA / LLMs:** Google Gemini, OpenAI  
+- **Otros:** AsyncIO, REST APIs, JSON, TailwindCSS  
 
-Base de datos: MySQL
+---
 
-IA / LLMs: Google Gemini, OpenAI
+## 🚀 Ejecución local
 
-Otros: AsyncIO, REST APIs, JSON, TailwindCSS
-
-🚀 Ejecución local
-
-Instalar dependencias:
-
+1. Instalar dependencias:
+```bash
 pip install -r requirements.txt
-
-
-Configurar variables de entorno:
-
-DB_HOST
-DB_NAME
-DB_USER
-DB_PASSWORD
-GEMINI_API_KEY
-OPENAI_API_KEY (opcional)
-
-
-Ejecutar la aplicación:
-
-python app.py
-
-
-Acceder desde el navegador:
-
-http://localhost:5000
-
-🔒 Consideraciones de IA responsable
-
-No se toman decisiones finales automáticamente
-
-Las puntuaciones se acompañan siempre de justificación
-
-El sistema está diseñado para asistencia, no sustitución humana
-
-Preparado para evolucionar hacia validaciones adicionales y control de sesgos
-
-📌 Estado del proyecto
-
-🚧 En desarrollo
-Próximos pasos:
-
-Evolución hacia arquitectura multiagente
-
-Agentes especializados por rol (técnico, RRHH, manager)
-
-Mayor control de contexto y validación
-
-Despliegue cloud para demo pública
