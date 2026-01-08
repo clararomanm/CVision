@@ -119,17 +119,21 @@ La aplicación sigue una arquitectura por capas claramente definida:
 1. Instalar dependencias:
 ```bash
 pip install -r requirements.txt
-
+```
 2. Configurar variables del entorno:
+```bash
 DB_HOST
 DB_NAME
 DB_USER
 DB_PASSWORD
 GEMINI_API_KEY
 OPENAI_API_KEY   # opcional
-
+```
 3. Ejecutar la aplicación:
+```bash
 python app.py
-
+```
 4. Acceder desde el navegador:
+```bash
 http://localhost:5000
+```
